@@ -560,7 +560,7 @@ mkHiFileResultCompile se session' tcm simplified_guts = catchErrs $ do
 #else
                        session
 #endif
-                       mod (ms_location ms) 
+                       mod (ms_location ms)
 
       -- Run corePrep first as we want to test the final version of the program that will
       -- get translated to STG/Bytecode
@@ -1613,7 +1613,10 @@ coreFileToCgGuts session iface details core_file = do
       -- Implicit binds aren't saved, so we need to regenerate them ourselves.
   let implicit_binds = concatMap getImplicitBinds tyCons
       tyCons = typeEnvTyCons (md_types details)
-#if MIN_VERSION_ghc(9,3,0)
+#if MIN_VERSION_ghc(9,5,0)
+  -- In GHC 9.6, the implicit binds are tidied and part of core_binds
+  pure $ CgGuts this_mod tyCons core_binds [] NoStubs [] mempty (emptyHpcInfo False) Nothing []
+#elif MIN_VERSION_ghc(9,3,0)
   pure $ CgGuts this_mod tyCons (implicit_binds ++ core_binds) [] NoStubs [] mempty (emptyHpcInfo False) Nothing []
 #else
   pure $ CgGuts this_mod tyCons (implicit_binds ++ core_binds) NoStubs [] [] (emptyHpcInfo False) Nothing []

@@ -134,8 +134,12 @@ codeGutsToCoreFile
   :: Fingerprint -- ^ Hash of the interface this was generated from
   -> CgGuts
   -> CoreFile
+#if MIN_VERSION_ghc(9,5,0)
+-- In GHC 9.6, implicit binds are tidied and part of core binds
+codeGutsToCoreFile hash CgGuts{..} = CoreFile (map (toIfaceTopBind1 cg_module) cg_binds) hash
+#else
 codeGutsToCoreFile hash CgGuts{..} = CoreFile (map (toIfaceTopBind1 cg_module) $ filter isNotImplictBind cg_binds) hash
-
+#endif
 -- | Implicit binds can be generated from the interface and are not tidied,
 -- so we must filter them out
 isNotImplictBind :: CoreBind -> Bool

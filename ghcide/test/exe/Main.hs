@@ -596,13 +596,19 @@ diagnosticTests = testGroup "diagnostics"
       expectDiagnostics
         [ ( "Main.hs"
           , [(DsError, (6, 9),
-                if ghcVersion >= GHC94
-                then "Variable not in scope: map" -- See https://gitlab.haskell.org/ghc/ghc/-/issues/22130
-                else "Not in scope: \8216ThisList.map\8217")
+                if ghcVersion >= GHC96 then
+                  "Variable not in scope: ThisList.map"
+                else if ghcVersion >= GHC94 then
+                  "Variable not in scope: map" -- See https://gitlab.haskell.org/ghc/ghc/-/issues/22130
+                else
+                  "Not in scope: \8216ThisList.map\8217")
             ,(DsError, (7, 9),
-                if ghcVersion >= GHC94
-                then "Variable not in scope: x" -- See https://gitlab.haskell.org/ghc/ghc/-/issues/22130
-                else "Not in scope: \8216BaseList.x\8217")
+                if ghcVersion >= GHC96 then
+                  "Variable not in scope: BaseList.x"
+                else if ghcVersion >= GHC94 then
+                  "Variable not in scope: x" -- See https://gitlab.haskell.org/ghc/ghc/-/issues/22130
+                else
+                  "Not in scope: \8216BaseList.x\8217")
             ]
           )
         ]
@@ -950,7 +956,7 @@ addSigLensesTests =
         , ("head = 233", "head :: Integer")
         , ("rank2Test (k :: forall a . a -> a) = (k 233 :: Int, k \"QAQ\")", "rank2Test :: (forall a. a -> a) -> (Int, " <> listOfChar <> ")")
         , ("symbolKindTest = Proxy @\"qwq\"", "symbolKindTest :: Proxy \"qwq\"")
-        , ("promotedKindTest = Proxy @Nothing", "promotedKindTest :: Proxy 'Nothing")
+        , ("promotedKindTest = Proxy @Nothing", if ghcVersion >= GHC96 then "promotedKindTest :: Proxy Nothing" else "promotedKindTest :: Proxy 'Nothing")
         , ("typeOperatorTest = Refl", if ghcVersion >= GHC92 then "typeOperatorTest :: forall {k} {a :: k}. a :~: a" else "typeOperatorTest :: a :~: a")
         , ("notInScopeTest = mkCharType", "notInScopeTest :: String -> Data.Data.DataType")
         ]
@@ -1768,7 +1774,7 @@ nonLocalCompletionTests =
       []
   ]
   where
-    brokenForWinGhc = knownBrokenFor (BrokenSpecific Windows [GHC810, GHC90, GHC92, GHC94]) "Windows has strange things in scope for some reason"
+    brokenForWinGhc = knownBrokenFor (BrokenSpecific Windows [GHC810, GHC90, GHC92, GHC94, GHC96]) "Windows has strange things in scope for some reason"
 
 otherCompletionTests :: [TestTree]
 otherCompletionTests = [
@@ -2000,7 +2006,7 @@ completionDocTests =
         , "bar = fo"
         ]
       test doc (Position 2 8) "foo" Nothing ["*Defined at line 2, column 1 in this module*\n"]
-  , testSession "local single line doc without '\\n'" $ do
+  , testSession "local single line doc without newline" $ do
       doc <- createDoc "A.hs" "haskell" $ T.unlines
         [ "module A where"
         , "-- |docdoc"
@@ -2008,7 +2014,7 @@ completionDocTests =
         , "bar = fo"
         ]
       test doc (Position 3 8) "foo" Nothing ["*Defined at line 3, column 1 in this module*\n* * *\n\n\ndocdoc\n"]
-  , testSession "local multi line doc with '\\n'" $ do
+  , testSession "local multi line doc with newline" $ do
       doc <- createDoc "A.hs" "haskell" $ T.unlines
         [ "module A where"
         , "-- | abcabc"
@@ -2017,7 +2023,7 @@ completionDocTests =
         , "bar = fo"
         ]
       test doc (Position 4 8) "foo" Nothing ["*Defined at line 4, column 1 in this module*\n* * *\n\n\nabcabc\n"]
-  , testSession "local multi line doc without '\\n'" $ do
+  , testSession "local multi line doc without newline" $ do
       doc <- createDoc "A.hs" "haskell" $ T.unlines
         [ "module A where"
         , "-- |     abcabc"
@@ -2057,10 +2063,10 @@ completionDocTests =
       test doc (Position 1 7) "id" (Just $ T.length expected) [expected]
   ]
   where
-    brokenForGhc9 = knownBrokenFor (BrokenForGHC [GHC90, GHC92, GHC94]) "Completion doc doesn't support ghc9"
+    brokenForGhc9 = knownBrokenFor (BrokenForGHC [GHC90, GHC92, GHC94, GHC96]) "Completion doc doesn't support ghc9"
     brokenForWinGhc9 = knownBrokenFor (BrokenSpecific Windows [GHC90, GHC92]) "Extern doc doesn't support Windows for ghc9.2"
     -- https://gitlab.haskell.org/ghc/ghc/-/issues/20903
-    brokenForMacGhc9 = knownBrokenFor (BrokenSpecific MacOS [GHC90, GHC92, GHC94]) "Extern doc doesn't support MacOS for ghc9"
+    brokenForMacGhc9 = knownBrokenFor (BrokenSpecific MacOS [GHC90, GHC92, GHC94, GHC96]) "Extern doc doesn't support MacOS for ghc9"
     test doc pos label mn expected = do
       _ <- waitForDiagnostics
       compls <- getCompletions doc pos
@@ -2108,7 +2114,7 @@ highlightTests = testGroup "highlight"
             , DocumentHighlight (R 6 10 6 13) (Just HkRead)
             , DocumentHighlight (R 7 12 7 15) (Just HkRead)
             ]
-  , knownBrokenForGhcVersions [GHC90, GHC92, GHC94] "Ghc9 highlights the constructor and not just this field" $
+  , knownBrokenForGhcVersions [GHC90, GHC92, GHC94, GHC96] "Ghc9 highlights the constructor and not just this field" $
         testSessionWait "record" $ do
         doc <- createDoc "A.hs" "haskell" recsource
         _ <- waitForDiagnostics

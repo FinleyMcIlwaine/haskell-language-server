@@ -610,13 +610,16 @@ data GhcVersion
   | GHC90
   | GHC92
   | GHC94
+  | GHC96
   deriving (Eq, Ord, Show)
 
 ghcVersionStr :: String
 ghcVersionStr = VERSION_ghc
 
 ghcVersion :: GhcVersion
-#if MIN_VERSION_GLASGOW_HASKELL(9,4,0,0)
+#if MIN_VERSION_GLASGOW_HASKELL(9,6,0,0)
+ghcVersion = GHC96
+#elif MIN_VERSION_GLASGOW_HASKELL(9,4,0,0)
 ghcVersion = GHC94
 #elif MIN_VERSION_GLASGOW_HASKELL(9,2,0,0)
 ghcVersion = GHC92
