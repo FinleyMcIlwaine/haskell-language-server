@@ -106,6 +106,7 @@ import           GHC                                               (AddEpAnn (Ad
                                                                     DeltaPos (..),
                                                                     EpAnn (..),
                                                                     EpaLocation (..),
+                                                                    hsmodAnn,
                                                                     LEpaComment)
 #else
 import           Language.Haskell.GHC.ExactPrint.Types             (Annotation (annsDP),
@@ -252,9 +253,21 @@ extendImportHandler' ideState ExtendImport {..}
     mzero
 
 isWantedModule :: ModuleName -> Maybe ModuleName -> GenLocated l (ImportDecl GhcPs) -> Bool
-isWantedModule wantedModule Nothing (L _ it@ImportDecl{ideclName, ideclHiding = Just (False, _)}) =
+isWantedModule wantedModule Nothing (L _ it@ImportDecl{ ideclName
+#if MIN_VERSION_ghc(9,5,0)
+                                                      , ideclImportList = Just (Exactly, _)
+#else
+                                                      , ideclHiding = Just (False, _)
+#endif
+                                                      }) =
     not (isQualifiedImport it) && unLoc ideclName == wantedModule
-isWantedModule wantedModule (Just qual) (L _ ImportDecl{ideclAs, ideclName, ideclHiding = Just (False, _)}) =
+isWantedModule wantedModule (Just qual) (L _ ImportDecl{ ideclAs, ideclName
+#if MIN_VERSION_ghc(9,5,0)
+                                                       , ideclImportList = Just (Exactly, _)
+#else
+                                                       , ideclHiding = Just (False, _)
+#endif
+                                                       }) =
     unLoc ideclName == wantedModule && (wantedModule == qual || (unLoc . reLoc <$> ideclAs) == Just qual)
 isWantedModule _ _ _ = False
 
@@ -1119,10 +1132,17 @@ occursUnqualified symbol ImportDecl{..}
     | isNothing ideclAs = Just False /=
             -- I don't find this particularly comprehensible,
             -- but HLint suggested me to do so...
+#if MIN_VERSION_ghc(9,5,0)
+        (ideclImportList <&> \(isHiding, L _ ents) ->
+            let occurs = any ((symbol `symbolOccursIn`) . unLoc) ents
+            in (isHiding == EverythingBut) && not occurs || (isHiding == Exactly) && occurs
+        )
+#else
         (ideclHiding <&> \(isHiding, L _ ents) ->
             let occurs = any ((symbol `symbolOccursIn`) . unLoc) ents
             in isHiding && not occurs || not isHiding && occurs
         )
+#endif
 occursUnqualified _ _ = False
 
 symbolOccursIn :: T.Text -> IE GhcPs -> Bool
@@ -1557,7 +1577,11 @@ findPositionAfterModuleName ps hsmodName' = do
     -- The exact-print API changed a lot in ghc-9.2, so we need to handle it separately for different compiler versions.
     whereKeywordLineOffset :: Maybe Int
 #if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,5,0)
+    whereKeywordLineOffset = case hsmodAnn hsmodExt of
+#else
     whereKeywordLineOffset = case hsmodAnn of
+#endif
         EpAnn _ annsModule _ -> do
             -- Find the first 'where'
             whereLocation <- fmap NE.head .  NE.nonEmpty . mapMaybe filterWhere .  am_main $ annsModule
@@ -1567,7 +1591,12 @@ findPositionAfterModuleName ps hsmodName' = do
     filterWhere _                       = Nothing
 
     epaLocationToLine :: EpaLocation -> Maybe Int
-    epaLocationToLine (EpaSpan sp) = Just . srcLocLine . realSrcSpanEnd $ sp
+#if MIN_VERSION_ghc(9,5,0)
+    epaLocationToLine (EpaSpan sp _)
+#else
+    epaLocationToLine (EpaSpan sp)
+#endif
+      = Just . srcLocLine . realSrcSpanEnd $ sp
     epaLocationToLine (EpaDelta (SameLine _) priorComments) = Just $ sumCommentsOffset priorComments
     -- 'priorComments' contains the comments right before the current EpaLocation
     -- Summing line offset of priorComments is necessary, as 'line' is the gap between the last comment and
@@ -1808,7 +1837,13 @@ textInRange (Range (Position (fromIntegral -> startRow) (fromIntegral -> startCo
 
 -- | Returns the ranges for a binding in an import declaration
 rangesForBindingImport :: ImportDecl GhcPs -> String -> [Range]
-rangesForBindingImport ImportDecl{ideclHiding = Just (False, L _ lies)} b =
+rangesForBindingImport ImportDecl{
+#if MIN_VERSION_ghc(9,5,0)
+  ideclImportList = Just (Exactly, L _ lies)
+#else
+  ideclHiding = Just (False, L _ lies)
+#endif
+  } b =
     concatMap (mapMaybe srcSpanToRange . rangesForBinding' b') lies
   where
     b' = wrapOperatorInParens b

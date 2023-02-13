@@ -61,7 +61,11 @@ import           Control.Monad.Trans.Except
 import           Control.Monad.Zip
 import           Data.Bifunctor
 import           Data.Bool                               (bool)
+#if MIN_VERSION_ghc(9,5,0)
+import           Language.Haskell.GHC.ExactPrint.Orphans
+#else
 import           Data.Default                            (Default)
+#endif
 import qualified Data.DList                              as DL
 import           Data.Either.Extra                       (mapLeft)
 import           Data.Foldable                           (Foldable (fold))
@@ -578,10 +582,17 @@ modifyMgMatchesT' ::
   r ->
   (r -> r -> m r) ->
   TransformT m (MatchGroup GhcPs (LHsExpr GhcPs), r)
+#if MIN_VERSION_ghc(9,5,0)
+modifyMgMatchesT' (MG xMg (L locMatches matches)) f def combineResults = do
+  (unzip -> (matches', rs)) <- mapM f matches
+  r' <- lift $ foldM combineResults def rs
+  pure $ (MG xMg (L locMatches matches'), r')
+#else
 modifyMgMatchesT' (MG xMg (L locMatches matches) originMg) f def combineResults = do
   (unzip -> (matches', rs)) <- mapM f matches
   r' <- lift $ foldM combineResults def rs
   pure $ (MG xMg (L locMatches matches') originMg, r')
+#endif
 #endif
 
 graftSmallestDeclsWithM ::
