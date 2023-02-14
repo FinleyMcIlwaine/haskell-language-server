@@ -510,13 +510,6 @@ findRecordCompl uri mn DataDecl {tcdLName, tcdDataDefn} = result
         extract _ = []
 findRecordCompl _ _ _ = []
 
-#if MIN_VERSION_ghc(9,5,0)
-extract_cons (NewTypeCon x) = [x]
-extract_cons (DataTypeCons _ xs) = xs
-#else
-extract_cons = id
-#endif
-
 toggleSnippets :: ClientCapabilities -> CompletionsConfig -> CompletionItem -> CompletionItem
 toggleSnippets ClientCapabilities {_textDocument} CompletionsConfig{..} =
   removeSnippetsWhen (not $ enableSnippets && supported)

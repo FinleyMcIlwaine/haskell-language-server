@@ -134,6 +134,7 @@ module Development.IDE.GHC.Compat(
     coreExprToBCOs,
     linkExpr,
 #endif
+    extract_cons
     ) where
 
 import           Data.Bifunctor
@@ -688,3 +689,11 @@ combineRealSrcSpans span1 span2
                                   (srcSpanEndLine span2, srcSpanEndCol span2)
     file = srcSpanFile span1
 #endif
+
+#if MIN_VERSION_ghc(9,5,0)
+extract_cons (NewTypeCon x) = [x]
+extract_cons (DataTypeCons _ xs) = xs
+#else
+extract_cons = id
+#endif
+
