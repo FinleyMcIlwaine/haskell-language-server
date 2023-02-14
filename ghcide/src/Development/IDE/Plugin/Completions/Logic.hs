@@ -141,7 +141,11 @@ getCContext pos pm
         importGo :: GHC.LImportDecl GhcPs -> Maybe Context
         importGo (L (locA -> r) impDecl)
           | pos `isInsideSrcSpan` r
+#if MIN_VERSION_ghc(9,5,0)
           = importInline importModuleName (fmap (fmap reLoc) $ ideclImportList impDecl)
+#else
+          = importInline importModuleName (fmap (fmap reLoc) $ ideclHiding impDecl)
+#endif
           <|> Just (ImportContext importModuleName)
 
           | otherwise = Nothing

@@ -137,8 +137,6 @@ import qualified GHC.Types.Error                   as Error
 #if MIN_VERSION_ghc(9,5,0)
 import GHC.Driver.Config.CoreToStg.Prep
 import GHC.Core.Lint.Interactive
-import GHC.Driver.Main (mkCgInteractiveGuts)
-import GHC.Unit.Home.ModInfo
 #endif
 
 -- | Given a string buffer, return the string (after preprocessing) and the 'ParsedModule'.

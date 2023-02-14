@@ -34,6 +34,7 @@ module Development.IDE.GHC.Compat.Outputable (
     mkWarnMsg,
     mkSrcErr,
     srcErrorMessages,
+    textDoc,
     ) where
 
 
@@ -85,7 +86,7 @@ import           GHC.Driver.Config.Diagnostic
 import           GHC.Utils.Logger
 #endif
 
-#if MIN_VERSION_ghc(9,3,0)
+#if MIN_VERSION_ghc(9,5,0)
 type PrintUnqualified = NamePprCtx
 #endif
 
@@ -247,3 +248,6 @@ defaultUserStyle = Out.defaultUserStyle
 #else
 defaultUserStyle = Out.defaultUserStyle unsafeGlobalDynFlags
 #endif
+
+textDoc :: String -> SDoc
+textDoc = text

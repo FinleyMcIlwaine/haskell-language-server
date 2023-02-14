@@ -11,6 +11,7 @@ where
 
 import           Control.Monad.IO.Class
 import           Data.Functor
+import           Data.Foldable                  (toList)
 import           Data.Generics                  hiding (Prefix)
 import           Data.Maybe
 import qualified Data.Text                      as T
@@ -30,7 +31,7 @@ import           Language.LSP.Types             (DocumentSymbol (..),
                                                  TextDocumentIdentifier (TextDocumentIdentifier),
                                                  type (|?) (InL), uriToFilePath)
 #if MIN_VERSION_ghc(9,2,0)
-import Data.List.NonEmpty (nonEmpty, toList)
+import Data.List.NonEmpty (nonEmpty)
 #endif
 
 moduleOutline
