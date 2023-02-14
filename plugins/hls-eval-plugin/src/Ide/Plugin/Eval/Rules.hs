@@ -44,6 +44,7 @@ import           Development.IDE.Types.Logger         (Pretty (pretty),
 #if MIN_VERSION_ghc(9,2,0)
 import           GHC.Parser.Annotation
 #endif
+
 import           Ide.Plugin.Eval.Types
 
 newtype Log = LogShake Shake.Log deriving Show
@@ -67,8 +68,13 @@ queueForEvaluation ide nfp = do
     modifyIORef var (Set.insert nfp)
 
 #if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,6,0)
+getAnnotations :: Development.IDE.GHC.Compat.Located (HsModule GhcPs) -> [LEpaComment]
+getAnnotations (L _ m@(HsModule { hsmodExt = XModulePs { hsmodAnn = anns' } })) =
+#else
 getAnnotations :: Development.IDE.GHC.Compat.Located HsModule -> [LEpaComment]
 getAnnotations (L _ m@(HsModule { hsmodAnn = anns'})) =
+#endif
     priorComments annComments <> getFollowingComments annComments
      <> concatMap getCommentsForDecl (hsmodImports m)
      <> concatMap getCommentsForDecl (hsmodDecls m)
