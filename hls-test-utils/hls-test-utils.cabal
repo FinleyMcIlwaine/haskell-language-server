@@ -25,6 +25,10 @@ source-repository head
   location: https://github.com/haskell/haskell-language-server
 
 library
+  if impl(ghc >= 9.7)
+      buildable: False
+  else
+      buildable: True
   exposed-modules:
     Test.Hls
     Test.Hls.Util

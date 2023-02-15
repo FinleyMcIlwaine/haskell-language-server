@@ -26,6 +26,10 @@ common warnings
   ghc-options: -Wall
 
 library
+  if impl(ghc >= 9.7)
+      buildable: False
+  else
+      buildable: True
   import:           warnings
   exposed-modules:  Ide.Plugin.CabalFmt
   hs-source-dirs:   src
@@ -44,6 +48,10 @@ library
   default-language: Haskell2010
 
 test-suite tests
+  if impl(ghc >= 9.7)
+      buildable: False
+  else
+      buildable: True
   import:             warnings
   type:               exitcode-stdio-1.0
   default-language:   Haskell2010

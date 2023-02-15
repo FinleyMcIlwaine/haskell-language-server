@@ -20,7 +20,10 @@ source-repository head
     location: https://github.com/haskell/haskell-language-server.git
 
 library
-  buildable: True
+  if impl(ghc >= 9.2)
+      buildable: False
+  else
+      buildable: True
   exposed-modules:    Ide.Plugin.RefineImports
   hs-source-dirs:     src
   build-depends:
@@ -43,7 +46,10 @@ library
     TypeOperators
 
 test-suite tests
-  buildable: True
+  if impl(ghc >= 9.2)
+      buildable: False
+  else
+      buildable: True
   type:             exitcode-stdio-1.0
   default-language: Haskell2010
   hs-source-dirs:   test

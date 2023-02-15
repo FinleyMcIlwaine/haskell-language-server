@@ -250,7 +250,9 @@ executable ghcide-test-preprocessor
     build-depends:
         base == 4.*
 
-    if !flag(test-exe)
+    if !flag(test-exe) || impl(ghc >= 9.7)
+        buildable: False
+    else
         buildable: False
 
 flag executable
@@ -304,8 +306,11 @@ executable ghcide
         TypeApplications
         ViewPatterns
 
-    if !flag(executable)
+    if !flag(executable) || impl(ghc >= 9.7)
         buildable: False
+    else
+        buildable: True
+
     if flag(ekg)
         build-depends:
             ekg-wai,
